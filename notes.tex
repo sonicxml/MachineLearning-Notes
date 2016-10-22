@@ -510,7 +510,7 @@ based on its error rate, so that ``better'' members are weighted more highly.
 We can do even better than this though. Using a technique called \emph{adaptive
 boosting}, or AdaBoost for short, we have a guaranteed method of turning a weak
 learner into a strong learner. You can read more about the AdaBoost algorithm
-in Appendix E.
+in Appendix D.
 
 \appendix
 \section{Appendix A: Agnostic Learning}
@@ -1109,10 +1109,7 @@ $[\alpha_1, \alpha_2]$, then $x_2$ must also be in the range and therefore
 classified $+$. Therefore, it is not possible to obtain the dichotomy
 $(+, -, +)$ from $\mathcal{C}$, and the VC dimension of $\mathcal{C}$ is $2$.
 
-\section{Appendix D: Occam Learning}
-% TODO
-
-\section{Appendix E: AdaBoost}
+\section{Appendix D: AdaBoost}
 Using a technique called \emph{adaptive boosting}, or AdaBoost for short, we
 have a guaranteed method of turning a weak learner into a strong learner. We
 can begin by calling our weak-learning algorithm $\LL$ to obtain a hypothesis
@@ -1141,20 +1138,20 @@ calculate the weights $\alpha_i$ and generate the new distribution $D_{t+1}$.
 \begin{figure}[H]
 \begin{framed}
     \begin{algorithmic}
-        \State $D_1 \leftarrow \frac{1}{n}$ for $i \leftarrow 1,\ldots, n$
-        \For{$t \leftarrow 1,\ldots, n$}
+        \State $D_1(i) \leftarrow \frac{1}{n}$ for $i \leftarrow 1,\ldots, n$
+        \For{$t \leftarrow 1,\ldots, T$}
             \State Produce hypothesis $h_t$ from distribution $D_t$
-            \State Let $\epsilon_t = Pr_{i\sim D_t} [h_t(x_i) \neq y(x_i)]$
+            \State Let $\epsilon_t = Pr_{i\sim D_t} [h_t(x_i) \neq y_i]$
             \State Let $\alpha_t = \frac{1}{2}\ln\left(\frac{1 -
             \epsilon_t}{\epsilon_t}\right)$
             \For{$i \leftarrow 1,\ldots, n$}
-            \State $D_{t+1}(i) = \frac{D_{t}(i)}{z}e^{-\alpha_t h_t(x_i)
-            y(x_i)}$, where $z$ is a normalization
+            \State $D_{t+1}(i) = \frac{D_{t}(i)}{Z_t}e^{-\alpha_t h_t(x_i)
+            y_i}$, where $Z_t$ is a normalization
             \State constant to enforce $D$ to be a distribution.
             \EndFor
         \EndFor
-        \State 
-        \State Output $H(x) = sign\left(\sum_{i = 1}^{T} \alpha_i h_i(x)\right)$
+        \State
+        \State Output $H(x) = sign\left(\sum_{t = 1}^{T} \alpha_t h_t(x)\right)$
     \end{algorithmic}
 \end{framed}
 \begin{center}
@@ -1168,68 +1165,68 @@ some mathematical manipulations, however, we can make this much more efficient.
 
 We can begin by rewriting $\alpha_t$:
 \begin{equation*}
-    \alpha_t = \frac{1}{2}\ln\left(\frac{1 - \epsilon_t}{\epsilon_t}\right) = 
+    \alpha_t = \frac{1}{2}\ln\left(\frac{1 - \epsilon_t}{\epsilon_t}\right) =
     \ln\left(\sqrt{\frac{1 - \epsilon_t}{\epsilon_t}}\right)
 \end{equation*}
 Next, we can plug the value of $\alpha_t$ into the equation for $D_{t+1}(i)$:
 
 \begin{align*}
-    D_{t+1}(i) &= \frac{D_{t}(i)}{z}e^{-\ln\left(\sqrt{\frac{1 -
-    \epsilon_t}{\epsilon_t}}\right)h_t(x_i) y(x_i)} \\
-    &= \frac{D_{t}(i)}{z} * \begin{dcases} 
-        \sqrt{\frac{\epsilon_t}{1 - \epsilon_t}}, 
-            & \text{if } h_t(x_i)y(x_i) = 1 \\ 
+    D_{t+1}(i) &= \frac{D_{t}(i)}{Z_t}e^{-\ln\left(\sqrt{\frac{1 -
+    \epsilon_t}{\epsilon_t}}\right)h_t(x_i) y_i} \\
+    &= \frac{D_{t}(i)}{Z_t} * \begin{dcases}
+        \sqrt{\frac{\epsilon_t}{1 - \epsilon_t}},
+            & \text{if } h_t(x_i)y_i = 1 \\
         \sqrt{\frac{1 - \epsilon_t}{\epsilon_t}},
-            & \text{if } h_t(x_i)y(x_i) = -1
+            & \text{if } h_t(x_i)y_i = -1
     \end{dcases}
 \end{align*}
-Note that $h_t(x_i)y(x_i) = 1$ iff the hypothesis $h_t$ is correct for sample
+Note that $h_t(x_i)y_i = 1$ iff the hypothesis $h_t$ is correct for sample
 $x_i$ and $-1$ if it is incorrect.
 
-We can now work on finding an expression for $z$. We know that it is the
+We can now work on finding an expression for $Z_t$. We know that it is the
 normalizing constant, so therefore:
 \begin{equation*}
-    z = \sqrt{\frac{\epsilon_t}{1 - \epsilon_t}} \sum_{\{i | h_t(x_i)y(x_i) =
-    1\}} D_t(i) + \sqrt{\frac{1 - \epsilon_t}{\epsilon_t}} 
-    \sum_{\{i | h_t(x_i)y(x_i) = -1\}} D_t(i)
+    z = \sqrt{\frac{\epsilon_t}{1 - \epsilon_t}} \sum_{\{i | h_t(x_i)y_i =
+    1\}} D_t(i) + \sqrt{\frac{1 - \epsilon_t}{\epsilon_t}}
+    \sum_{\{i | h_t(x_i)y_i = -1\}} D_t(i)
 \end{equation*}
-Now, we realize that $\sum_{\{i | h_t(x_i)y(x_i) = -1\}} D_t(i)$ is in fact
-$\epsilon_t$, making $\sum_{\{i | h_t(x_i)y(x_i) = 1\}} D_t(i)$ equal to $1 -
-\epsilon_t$. This means that we can rewrite $z$ in terms of $\epsilon_t$:
+Now, we realize that $\sum_{\{i | h_t(x_i)y_i = -1\}} D_t(i)$ is in fact
+$\epsilon_t$, making $\sum_{\{i | h_t(x_i)y_i = 1\}} D_t(i)$ equal to $1 -
+\epsilon_t$. This means that we can rewrite $Z_t$ in terms of $\epsilon_t$:
 \begin{equation*}
-    z = 2\sqrt{\epsilon_t (1 - \epsilon_t}
+    Z_t = 2\sqrt{\epsilon_t (1 - \epsilon_t)}
 \end{equation*}
 
 Combining the above, we get:
 \begin{equation*}
     D_{t+1}(i) = \frac{D_t(i)}{2} * \begin{dcases}
-        \frac{1}{1 - \epsilon_t}, & \text{if } h_t(x_i)y(x_i) = 1 \\ 
-        \frac{1}{\epsilon_t}, & \text{if } h_t(x_i)y(x_i) = -1
+        \frac{1}{1 - \epsilon_t}, & \text{if } h_t(x_i)y_i = 1 \\
+        \frac{1}{\epsilon_t}, & \text{if } h_t(x_i)y_i = -1
     \end{dcases}
 \end{equation*}
 
 We can still do better. Consider
 \begin{equation*}
-    \sum_{\{i | h_t(x_i) = y(x_i)\}} D_{t+1}(i) = \frac{1}{2} \frac{1}{1 +
-    \epsilon_t} \sum_{\{i | h_t(x_i) = y(x_i)\}} D_{t}(i)
+    \sum_{\{i | h_t(x_i) = y_i\}} D_{t+1}(i) = \frac{1}{2} \frac{1}{1 +
+    \epsilon_t} \sum_{\{i | h_t(x_i) = y_i\}} D_{t}(i)
 \end{equation*}
-However, we already showed that $\sum_{\{i | h_t(x_i) = y(x_i)\}} D_{t}(i) = 1
+However, we already showed that $\sum_{\{i | h_t(x_i) = y_i\}} D_{t}(i) = 1
 - \epsilon_t$, giving us:
 \begin{equation*}
-    \sum_{\{i | h_t(x_i) = y(x_i)\}} D_{t+1}(i) = \frac{1}{2}
+    \sum_{\{i | h_t(x_i) = y_i\}} D_{t+1}(i) = \frac{1}{2}
 \end{equation*}
 Which also means that:
 \begin{equation*}
-    \sum_{\{i | h_t(x_i) \neq y(x_i)\}} D_{t+1}(i) = \frac{1}{2}
+    \sum_{\{i | h_t(x_i) \neq y_i\}} D_{t+1}(i) = \frac{1}{2}
 \end{equation*}
 This means that we evenly reweight all samples we just got correct to
 collectively appear $1/2$ of the time and also reweight those samples we just
 got wrong to collectively appear $1/2$ of the time, which loops us back around
 to the original intuition behind AdaBoost.
 
-now we need to prove some properties about this algorithm --- how do we know
-it's actually good? Here is a theorem that we will prove that shows that the
-error decreases exponentially quickly.
+This seems like a fine and dandy algorithm, but how do we know that it works
+--- that is, how do we know that it reduces the error? Here is a theorem that
+we will prove that shows that the error decreases exponentially quickly.
 
 \begin{framed}
 \begin{thm}
@@ -1241,12 +1238,56 @@ error decreases exponentially quickly.
 
 To start, let's write $D_t$ in a recursive form. We know that
 \begin{equation*}
-    D_t(i) = \frac{D_{t-1}(i)}{z_{t-1}}e^{-\alpha_{t-1} h_{t-1}(x_i) y({x_i})}
+    D_t(i) = \frac{D_{t-1}(i)}{Z_{t-1}}e^{-\alpha_{t-1} h_{t-1}(x_i) y_i}
 \end{equation*}
 Meaning we can write it as:
 \begin{equation*}
-    D_t(i) = D_1(i)\frac{e^{-\alpha_{1} h_{1}(x_i) y({x_i})}}{z_1}*\dots*
-    \frac{e^{-\alpha_{t-1} h_{t-1}(x_i) y({x_i})}}{z_{t-1}}
+    D_t(i) = D_1(i)\frac{e^{-\alpha_{1} h_{1}(x_i) y_i}}{Z_1}*\dots*
+    \frac{e^{-\alpha_{t-1} h_{t-1}(x_i) y_i}}{Z_{t-1}}
 \end{equation*}
+This can be simplified (since $D_1$ is uniformly $1/m$):
+\begin{equation*}
+    D_t(i) = \frac{1}{m}\frac{e^{\sum_{j=1}^{t} -\alpha_{j-1} h_{j-1}(x_i)
+    y_i}}{\prod_{j=1}^{t} z_j}
+\end{equation*}
+
+Now we can look at $D_{T+1}$:
+\begin{equation*}
+    \sum_{i=1}^{m}D_{T+1}(i) = 1 = \frac{1}{m}\left(\frac{\sum_{i=1}^{m}\exp{-f(x_i)y_i}}{\sum_{t=1}^{T}Z_t}\right)
+\end{equation*}
+which gives us:
+\begin{equation*}
+    \sum_{t=1}^{T}Z_t = \frac{1}{m}\sum_{i=1}^{m} e^{-f(x_i)y_i}
+\end{equation*}
+
+Now, let us argue that the training error from the final classifier can be
+upper bounded by the sum of $Z_t$:
+\begin{align*}
+    \frac{1}{m}\sum_{i=1}^{m}I(H(x_i) \neq y_i) &\leq \frac{1}{m}\sum_{i=1}^{m} e^{-f(x_i)y_i} = \sum_{t=1}^{T}Z_t
+\end{align*}
+This is because if $I(H(x_i) \neq y_i) = 1$, that means that $f(x_i)y_i < 0$,
+which means that $e^{-f(x_i)y_i} \geq I(H(x_i) \neq y_i) = 1$. If
+$I(H(x_i) \neq y_i) = 0$, then $f(x_i)y_i > 0$,
+which means that $e^{-f(x_i)y_i} \geq I(H(x_i) \neq y_i) = 0$.
+
+Now if we let $\epsilon_t = \frac{1}{2} - \gamma_t$, we can show that $Z_t \leq
+e^{-2\gamma_t^2}$:
+\begin{align*}
+    Z_t &= 2\sqrt{\epsilon_t(1-\epsilon_t)} \tag{Using the previously derived expression for $Z_t$}\\
+    &= 2\sqrt{\left(\frac{1}{2} - \gamma_t\right)\left(1-\left(\frac{1}{2} - \gamma_t\right)\right)} \\
+    &= 2\sqrt{\left(\frac{1}{2} - \gamma_t\right)\left(\gamma_t + \frac{1}{2}\right)} \\
+    &= 2\sqrt{\frac{1}{4} - \gamma_t^2} \\
+    &= \sqrt{1 - 4\gamma_t^2} \\
+    &= e^{\frac{1}{2}\log(1 - 4\gamma_t^2)} \\
+    &\leq e^{\frac{1}{2}(4\gamma_t^2)} \\
+    &= e^{2\gamma_t^2}
+\end{align*}
+which means that we can say that
+\begin{equation*}
+    \epsilon_{training} \leq \prod_tZ_t \leq e^{(-2\sum_t\gamma_t^2)}
+\end{equation*}
+
+and the proof is complete.
+
 \end{document}
 
