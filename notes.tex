@@ -34,14 +34,18 @@
 % For rendering diagrams
 \usepackage{tikz}
 \usetikzlibrary{arrows}
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+\usetikzlibrary{patterns}
+
+\usepackage{complexity}
+
 
 \newtheorem{thm}{Theorem}
 
 \newtheorem*{lemma}{Lemma}
 
 \DeclarePairedDelimiter\abs{\lvert}{\rvert}
-
-\newcommand{\C}{\ensuremath{\mathcal{C}}}
 
 \newcommand{\LL}{\ensuremath{\mathcal{L}}}
 
@@ -59,10 +63,10 @@
 
 \graphicspath{{images/}}
 
-\title{CIS 399: Machine Learning Lecture Notes \\ (Lecture 2/2)}
-\author{JT Cho and Trevin Gandhi \\
-Lecture by Professor Michael Kearns}
-\date{Thursday, February 11, 2016}
+\title{CIS 625: Introduction to Computational Learning Theory \\ Lecture Notes}
+\author{JT Cho, Trevin Gandhi, and Brady Neal \\
+Lectures by Professor Michael Kearns}
+\date{}
 
 \begin{document}
 
@@ -70,6 +74,294 @@ Lecture by Professor Michael Kearns}
 
 \tableofcontents
 \clearpage
+
+\section{A Theoretical Model for Classification}
+
+We define $X$, $\mathcal{D}$, $\mathcal{C}$, $c_t$, and EX here:
+
+\begin{itemize}
+
+    \item
+    an input space $X$ (e.g. $X = \mathbb{R}^n$, $X = \{0, 1\}^n$)
+
+    \item
+    unknown and arbitrary distribution $\mathcal{D}$ over $X$
+
+    \item
+    known class $\mathcal{C}$ of binary functions
+    \begin{itemize}
+        \item
+        examples: $c \in \mathcal{C}$, $c : X \rightarrow \{1, -1\}$ or $c : X \rightarrow \{0, 1\}$
+    \end{itemize}
+
+    \item
+    unknown target function $c_t \in \mathcal{C}$
+
+    \item
+    access to procedure (oracle) EX$(c_t, \mathcal{D})$ that returns $\langle x, c_t(x) \rangle$ pairs where $X \sim D$
+    \begin{itemize}
+        \item
+        This oracle essentially gives you training data.
+    \end{itemize}
+
+    \item
+    The goal is not to fit the training data from the oracle well but to learn a function $h \in \mathcal{C}$ that generalizes well. In other words, we'd like to learn a function $h$ that is close to the target function $c_t \in \mathcal{C}$. Notice that in this model, the function we learn and the target function are both in the same class of binary functions.
+
+    \item
+    The learning algorithm is constrained by ``sample efficiency" and ``computational efficiency." These are formalized below.
+
+\end{itemize}
+
+\subsection{Probably Approximately Correct (PAC) Learning Definition}
+
+A class $\mathcal{C}$ is PAC-learnable if: \\
+$\exists$ an algorithm $L$ such that \\
+$\forall \, c_t \in \mathcal{C}$, $\forall \, \mathcal{D}$ over $X$, $\forall \, \epsilon, \delta > 0$, \\
+given $\epsilon$, $\delta$, and EX$(c_t, D)$, $L$ outputs $h \in \mathcal{C}$ with probability $1 - \delta$ (``Probably") and the following conditions hold:
+
+\begin{enumerate}
+
+    \item Learning Condition (``Approximately Correct"):
+    \[\Pr_{X \sim \mathcal{D}}[h(x) \neq c_t(x)] \leq \epsilon\]
+
+    \item Sample Efficiency:
+    \[\text{number of calls to EX} (c_t, \mathcal{D}) \text{ is } \poly\left(\frac{1}{\epsilon}, \frac{1}{\delta}, m\right)\]
+
+    \item Computational Efficiency:
+    \[\text{running time of } L \text{ is } \poly\left(\frac{1}{\epsilon}, \frac{1}{\delta}, m\right)\]
+    Note that with the model of computation where EX takes constant time, this $3$\textsuperscript{rd} condition implies the $2$\textsuperscript{nd} condition.
+
+\end{enumerate}
+
+\subsection{Rectangle Example}
+
+Consider the problem of classifying people of medium build. It might make sense to classify a person as having medium build if they're inside some rectangle. Similarly, all people outside the rectangle would be classified as not having medium build.
+
+\begin{itemize}
+
+    \item
+    Input Space: $X = \mathbb{R}^2$
+
+    \item
+    Known Class of Binary Functions: $\mathcal{C} =$ all axis-aligned (edges parallel to coordinate axes) rectangles in $\mathbb{R}^2$
+
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    title=Example Scatter Plot with some Classification Rectangle:,
+    axis lines=middle,
+    xmin=0, xmax=10,
+    ymin=0, ymax=10,
+    xlabel=height, xlabel near ticks,
+    ylabel=weight, ylabel near ticks,
+    xtick=\empty, ytick=\empty,
+    legend pos=outer north east,
+]
+\addplot[only marks,blue] plot coordinates {
+    (3.5, 6.5)
+    (4, 5)
+    (5, 4.5)
+    (5, 7)
+    (6, 5.5)
+    (6.7, 7.3)
+    (7.2, 4.8)
+};
+\addplot[only marks,red] plot coordinates {
+    (1, 1.5)
+    (1.2, 7)
+    (1.5, 8)
+    (1.8, 5)
+    %(2, 2)
+    (2.5, 3)
+    (2.5, 9.5)
+    (4, 2.5)
+    (4.2, 8.7)
+    (5.5, 9.8)
+    (6, 2.7)
+    (6, 9)
+    (8, 2)
+    (8, 9.5)
+    (9, 3)
+    (9, 10)
+    (9.5, 6)
+    (9.8, 9)
+};
+\draw (3,4) rectangle (8,8);
+\legend{Medium Build, Not Medium Build}
+
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+Because the rectangle ($h$) above correctly classifies all the data points, we say $h$ is consistent. More formally, $c \in \mathcal{C}$ is consistent with $S$ if for all $1 \leq i \leq m$, $c(x_i) = b_i$ where $S = \{\langle x_1, b_1 \rangle, \dots, \langle x_m, b_m \rangle\}$ is the training data obtained from the oracle. There are many different consistent $c \in C$. For example, there is one on the next page that draws the rectangle according to the extremal values of the \emph{positive} examples (left) and the other draws the rectangle according to the extremal values of the \emph{negative} examples (right).
+
+\begin{tikzpicture}[scale = .8]
+\begin{axis}[
+    title=Example Scatter Plot with Positive Extremal Values:,
+    axis lines=middle,
+    xmin=0, xmax=10,
+    ymin=0, ymax=10,
+    xlabel=height, xlabel near ticks,
+    ylabel=weight, ylabel near ticks,
+    xtick=\empty, ytick=\empty,
+]
+\addplot[only marks,blue] plot coordinates {
+    (3.5, 6.5)
+    (4, 5)
+    (5, 4.5)
+    (5, 7)
+    (6, 5.5)
+    (6.7, 7.3)
+    (7.2, 4.8)
+};
+\addplot[only marks,red] plot coordinates {
+    (1, 1.5)
+    (1.2, 7)
+    (1.5, 8)
+    (1.8, 5)
+    %(2, 2)
+    (2.5, 3)
+    (2.5, 9.5)
+    (4, 2.5)
+    (4.2, 8.7)
+    (5.5, 9.8)
+    (6, 2.7)
+    (6, 9)
+    (8, 2)
+    (8, 9.5)
+    (9, 3)
+    (9, 10)
+    (9.5, 6)
+    (9.8, 9)
+};
+\draw (3.5, 4.5) rectangle (7.2, 7.3);
+
+\end{axis}
+\end{tikzpicture}
+\hspace{1cm}
+\begin{tikzpicture}[scale = .8]
+\begin{axis}[
+    title=Example Scatter Plot with Negative Extremal Values:,
+    axis lines=middle,
+    xmin=0, xmax=10,
+    ymin=0, ymax=10,
+    xlabel=height, xlabel near ticks,
+    ylabel=weight, ylabel near ticks,
+    xtick=\empty, ytick=\empty,
+]
+\addplot[only marks,blue] plot coordinates {
+    (3.5, 6.5)
+    (4, 5)
+    (5, 4.5)
+    (5, 7)
+    (6, 5.5)
+    (6.7, 7.3)
+    (7.2, 4.8)
+};
+\addplot[only marks,red] plot coordinates {
+    (1, 1.5)
+    (1.2, 7)
+    (1.5, 8)
+    (1.8, 5)
+    %(2, 2)
+    (2.5, 3)
+    (2.5, 9.5)
+    (4, 2.5)
+    (4.2, 8.7)
+    (5.5, 9.8)
+    (6, 2.7)
+    (6, 9)
+    (8, 2)
+    (8, 9.5)
+    (9, 3)
+    (9, 10)
+    (9.5, 6)
+    (9.8, 9)
+};
+\draw (2.5, 3) rectangle (9, 8.7);
+
+\end{axis}
+\end{tikzpicture}
+
+Although these two rectangles are consistent, they might not generalize as well to data not in $S$ because they tightly fit either the positive training examples (left) or the negative training examples (right).
+
+Let's consider the rectangle on the left, the one that is drawn tightly around the extremal values of the positive training examples. Let that rectangle be the function we have learned so far: $h$. It is the solid rectangle in the graph below. The dotted rectangle is the target function $c_t$.
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    axis lines=middle,
+    xmin=0, xmax=10,
+    ymin=0, ymax=10,
+    xlabel=height, xlabel near ticks,
+    ylabel=weight, ylabel near ticks,
+    xtick=\empty, ytick=\empty,
+]
+
+\draw (3.5, 4.5) rectangle (7.2, 7.3);
+\draw[dashed] (2.5, 3.5) rectangle (8.2, 8.3);
+
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+We want to bound the probability that $h$ differs from $c_t$. To do this, first consider just the topmost strip between the edge of $h$ and the edge of $c_t$. We'll call this region $T$.
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    hide axis,
+    xmin=0, xmax=10,
+    ymin=0, ymax=10,
+    xtick=\empty, ytick=\empty,
+]
+
+\draw (3.5, 4.5) rectangle (7.2, 7.3);
+\draw[dashed] (2.5, 3.5) rectangle (8.2, 8.3);
+\fill[pattern=north east lines, pattern color=gray] (2.5, 7.3) rectangle (8.2, 8.3);
+
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+We can bound the size of $T$. Let the probability mass that's in $T$ be $\frac{\epsilon}{4}$. This choice will make sense soon. This means that when sampling a single example $x_i$ from EX, we know the following:
+\[\Pr_{X \sim \mathcal{D}}[x_i \text{ not in } T] = 1 - \frac{\epsilon}{4}\]
+Assuming independence, for $m$ examples from EX, we know:
+\[\Pr_{X \sim \mathcal{D}}[\text{all of } x_1 \dots x_m \text{ are not in } T] = \left(1 - \frac{\epsilon}{4}\right)^m\]
+
+This is important because the probability of not expanding $h$ is exponentially small in our number of training examples. Now that we've examined a single strip, let's look at the whole portion of area that is outside of $h$ and inside of $c_t$. Let this region be $B$.
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    hide axis,
+    xmin=0, xmax=10,
+    ymin=0, ymax=10,
+    xtick=\empty, ytick=\empty,
+]
+
+\draw (3.5, 4.5) rectangle (7.2, 7.3);
+\draw[dashed] (2.5, 3.5) rectangle (8.2, 8.3);
+\fill[pattern=north east lines, pattern color=gray] (2.5, 3.5) rectangle (8.2,8.3);
+\fill[white] (3.5, 4.5) rectangle (7.2, 7.3);
+
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+If we let each of the strips have roughly the same probability mass, we can bound the probability of not getting a single example in $B$ using the union bound:
+\[\Pr_{X \sim \mathcal{D}}[\text{all of } x_1 \dots x_m \text{ are not in } B] \leq 4 \left(1 - \frac{\epsilon}{4}\right)^m\]
+
+What we've been doing is working on making that shaded rectangular border $B$ as small as necessary to make $h$ close to $c_t$. This is the learning condition or the ``Approximately Correct" (AC) part of PAC learning. To get the ``Probably" (P) part of PAC learning, we need to bound this probability:
+\[4 \left(1 - \frac{\epsilon}{4}\right)^m \leq \delta\]
+Using $(1 - x) \leq e^{-x}$, we have:
+\[4e^{-\frac{\epsilon}{4} m} \leq 4 \left(1 - \frac{\epsilon}{4}\right)^m \leq \delta\]
+\[4e^{-\frac{\epsilon}{4} m} \leq \delta\]
+\[\frac{-\epsilon}{4} m \leq \ln \frac{\delta}{4}\]
+\[m \geq \frac{4}{\epsilon} \ln \frac{4}{\delta}\]
+Because $m$ is polynomial in $\frac{1}{\epsilon}$ and logarithmic in $\frac{1}{\delta}$, we have satisfied the Sample Efficiency condition. Although we did this analysis for 2D, the number of ``strips" grows linearly with the number of dimensions, so that's not a problem. Also, the analysis doesn't use the distribution $\mathcal{D}$ at all. It only uses independence of training examples.
 
 \section{PAC Learning Model}
 Let's first review the definition of a PAC-learnable class of functions:
