@@ -125,10 +125,10 @@ given $\epsilon$, $\delta$, and EX$(c_t, D)$, $L$ outputs $h \in \mathcal{C}$ wi
     \[\Pr_{X \sim \mathcal{D}}[h(x) \neq c_t(x)] \leq \epsilon\]
 
     \item Sample Efficiency:
-    \[\text{number of calls to EX} (c_t, \mathcal{D}) \text{ is } \poly\left(\frac{1}{\epsilon}, \frac{1}{\delta}, m\right)\]
+    \[\text{number of calls to EX} (c_t, \mathcal{D}) \text{ is } \poly\left(\frac{1}{\epsilon}, \frac{1}{\delta}, n\right)\]
 
     \item Computational Efficiency:
-    \[\text{running time of } L \text{ is } \poly\left(\frac{1}{\epsilon}, \frac{1}{\delta}, m\right)\]
+    \[\text{running time of } L \text{ is } \poly\left(\frac{1}{\epsilon}, \frac{1}{\delta}, n\right)\]
     Note that with the model of computation where EX takes constant time, this $3$\textsuperscript{rd} condition implies the $2$\textsuperscript{nd} condition.
 
 \end{enumerate}
@@ -356,8 +356,8 @@ If we let each of the strips have roughly the same probability mass, we can boun
 
 What we've been doing is working on making that shaded rectangular border $B$ as small as necessary to make $h$ close to $c_t$. This is the learning condition or the ``Approximately Correct" (AC) part of PAC learning. To get the ``Probably" (P) part of PAC learning, we need to bound this probability:
 \[4 \left(1 - \frac{\epsilon}{4}\right)^m \leq \delta\]
-Using $(1 - x) \leq e^{-x}$, we have:
-\[4e^{-\frac{\epsilon}{4} m} \leq 4 \left(1 - \frac{\epsilon}{4}\right)^m \leq \delta\]
+Using $(1 - x) \approx e^{-x}$ (for small $x$), we have:
+\[4e^{-\frac{\epsilon}{4} m} \approx 4 \left(1 - \frac{\epsilon}{4}\right)^m \leq \delta\]
 \[4e^{-\frac{\epsilon}{4} m} \leq \delta\]
 \[\frac{-\epsilon}{4} m \leq \ln \frac{\delta}{4}\]
 \[m \geq \frac{4}{\epsilon} \ln \frac{4}{\delta}\]
@@ -402,8 +402,8 @@ satisfies the following conditions:
         $\frac{1}{\delta}$, and $n$.
 \end{enumerate}
 
-\emph{Consistency.} Given a labeled
-sample $S = \{<x_1, y_1>, <x_2, y_2>, ..., <x_n, y_n> | y_i = c(x_i)
+\emph{Consistency.} Given labeled
+samples $S = \{<x_1, y_1>, <x_2, y_2>, ..., <x_m, y_m> | y_i = c(x_i)\
 \forall 1 \leq i \leq m\}$, then we say some $h \in \mathcal{C}$ is
 \textbf{consistent} with $S$ if $\forall 1 \leq i \leq m,$
 $h(x_i) = y_i$. That is, a function $h \in \mathcal{C}$ is consistent
